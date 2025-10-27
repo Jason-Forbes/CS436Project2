@@ -5,12 +5,14 @@ import sys
 import threading
 import time
 
-
-def handle_request():
+def handle_request(hostname):
     # Check RR table for record
-
+    flag = False
     # If not found, ask the local DNS server, then save the record if valid
-    local_dns_address = ("127.0.0.1", 21000)
+    if flag == False:
+        local_dns_address = ("127.0.0.1", 21000)
+        
+        RRTable.add_record(local_dns_address)
 
     # The format of the DNS query and response is in the project description
 
@@ -19,7 +21,6 @@ def handle_request():
 
 
 def main():
-    print("test")
     try:
         while True:
             input_value = input("Enter the hostname (or type 'quit' to exit) ")
@@ -32,12 +33,12 @@ def main():
             # For extra credit, let users decide the query type (e.g. A, AAAA, NS, CNAME)
             # This means input_value will be two values separated by a space
 
-            handle_request()
+            handle_request(hostname)
 
     except KeyboardInterrupt:
         print("Keyboard interrupt received, exiting...")
     finally:
-        # Close UDP socket
+        clientSocket.close()
         pass
 
 
@@ -55,7 +56,7 @@ def deserialize():
 
 class RRTable:
     def __init__(self):
-        # self.records = ?
+        self.records = []
         self.record_number = 0
 
         # Start the background thread
@@ -63,9 +64,18 @@ class RRTable:
         self.thread = threading.Thread(target=self.__decrement_ttl, daemon=True)
         self.thread.start()
 
-    def add_record(self):
+    def add_record(self, name, type, result, ttl, static = False):
         with self.lock:
-            pass
+         self.record_number += 1
+         record = {
+         'record_number': self.record_number,
+         'name': name,
+         'type': type,
+         'result': result,
+         'ttl': ttl,
+         'static': static
+         }
+        self.records.append(record)
 
     def get_record(self):
         with self.lock:
@@ -90,6 +100,8 @@ class RRTable:
         # Remove expired records
         # Update record numbers
         pass
+
+clientRR = RRTable() #object for our RR instance
 
 
 class DNSTypes:

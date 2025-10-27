@@ -5,7 +5,7 @@ import threading
 import time
 
 
-def listen():
+def listen(): 
     try:
         while True:
             # Wait for query

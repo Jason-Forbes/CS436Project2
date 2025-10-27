@@ -19,6 +19,7 @@ def handle_request():
 
 
 def main():
+    print("test")
     try:
         while True:
             input_value = input("Enter the hostname (or type 'quit' to exit) ")

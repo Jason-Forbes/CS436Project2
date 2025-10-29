@@ -7,7 +7,7 @@ def listen():
     try:
         while True:
             # Wait for query
-
+        
             # Check RR table for record
 
             # If not found, add "Record not found" in the DNS response
@@ -30,6 +30,7 @@ def main():
 
     amazone_dns_address = ("127.0.0.1", 22000)
     # Bind address to UDP socket
+
 
     listen()
 

@@ -1,67 +1,110 @@
 import errno
 import socket
 import sys
+import json
+from tabulate import tabulate
 
 
-def listen():
+def listen(connection, amazoneTable):
     try:
         while True:
             # Wait for query
-        
+            data, address = connection.recieve_message()
+            message = deserialize(data)
+
+            hostname = message.get("name")
+            messageType = message.get("type")
+
+            record = amazoneTable.get_record(hostname)
             # Check RR table for record
-
+            if not record:
+                response = {
+                    "status": "FOUND",
+                    "record": record
+                }
             # If not found, add "Record not found" in the DNS response
+            else:
+                response = {
+                    "status": "NOT_FOUND",
+                    "message": "Record not found"
+                }
             # Else, return record in DNS response
-
-            # The format of the DNS query and response is in the project description
+            connection.send_messsage(serialize(response), address)
 
             # Display RR table
-            pass
+            amazoneTable.display_table()
+
     except KeyboardInterrupt:
         print("Keyboard interrupt received, exiting...")
     finally:
         # Close UDP socket
-        pass
+        socket.close()
 
 
 def main():
     # Add initial records
+    amazoneTable = RRTable()
+    amazoneTable.add_record("shop.amazon.com", "A", "3.33.147.88", None, False)
+    amazoneTable.add_record("cloud.amazone.com", "A", "15.197.140.28", None, False)
+
     # These can be found in the test cases diagram
-
     amazone_dns_address = ("127.0.0.1", 22000)
+    connection = UDPConnection()
+    connection.bind(amazone_dns_address)
+
     # Bind address to UDP socket
+    amazoneTable.display_table()
+
+    listen(connection, amazoneTable)
 
 
-    listen()
-
-
-def serialize():
+def serialize(data: dict) -> str:
     # Consider creating a serialize function
     # This can help prepare data to send through the socket
-    pass
+    return json.dumps(data)
 
 
-def deserialize():
+def deserialize(data: str) -> dict:
     # Consider creating a deserialize function
     # This can help prepare data that is received from the socket
-    pass
+    return json.loads(data)
 
 
 class RRTable:
     def __init__(self):
-        # self.records = ?
+        self.records = []
         self.record_number = 0
 
-    def add_record(self):
-        pass
+    def add_record(self, name, type, result, ttl = 60, static = False):
+        with self.lock:
+         self.record_number += 1
+         record = {
+         'record_number': self.record_number,
+         'name': name,
+         'type': type,
+         'result': result,
+         'ttl': None if static else ttl,
+         'static': static,
+        }
+        self.records.append(record)
 
-    def get_record(self):
-        pass
+
+    def get_record(self, name):
+        with self.lock:
+            for record in self.records:
+                if record["name"]  == name:
+                    return record
+        return None
+
 
     def display_table(self):
-        # Display the table in the following format (include the column names):
-        # record_number,name,type,result,ttl,static
-        pass
+        with self.lock:
+           if not self.records:
+                print("[RR Table Empty]")
+                return
+        headers = ["record_number", "name", "type", "result", "ttl", "static"]
+        print(tabulate(self.records, headers=headers, tablefmt="grid"))
+
 
 
 class DNSTypes:

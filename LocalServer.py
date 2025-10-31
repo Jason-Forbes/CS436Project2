@@ -112,6 +112,7 @@ class LocalDNSServer:
     def __init__(self, local_dns_address: tuple[str, int], initial_records: list):
         self.record_table = RRTable()
         self.connection = UDPConnection()
+        print("Running....")
         
         # Add initial records
         for record in initial_records:
